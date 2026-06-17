@@ -35,6 +35,7 @@ from .redis_cache import RedisCache
 from .redis_cluster_cache import RedisClusterCache
 from .redis_semantic_cache import RedisSemanticCache
 from .s3_cache import S3Cache
+from .valkey_semantic_cache import ValkeySemanticCache
 
 
 def print_verbose(print_statement):
@@ -100,6 +101,8 @@ class Cache:
         gcs_path: Optional[str] = None,
         redis_semantic_cache_embedding_model: str = "text-embedding-ada-002",
         redis_semantic_cache_index_name: Optional[str] = None,
+        valkey_semantic_cache_embedding_model: str = "text-embedding-ada-002",
+        valkey_semantic_cache_index_name: str | None = None,
         redis_flush_size: Optional[int] = None,
         redis_startup_nodes: Optional[List] = None,
         disk_cache_dir: Optional[str] = None,
@@ -208,6 +211,17 @@ class Cache:
                 index_name=redis_semantic_cache_index_name,
                 **kwargs,
             )
+        elif type == LiteLLMCacheType.VALKEY_SEMANTIC:
+            self.cache = ValkeySemanticCache(
+                host=host,
+                port=port,
+                password=password,
+                similarity_threshold=similarity_threshold,
+                embedding_model=valkey_semantic_cache_embedding_model,
+                index_name=valkey_semantic_cache_index_name,
+                startup_nodes=redis_startup_nodes,
+                **kwargs,
+            )
         elif type == LiteLLMCacheType.QDRANT_SEMANTIC:
             self.cache = QdrantSemanticCache(
                 qdrant_api_base=qdrant_api_base,
@@ -267,6 +281,7 @@ class Cache:
         if (
             self.type == LiteLLMCacheType.REDIS
             or self.type == LiteLLMCacheType.REDIS_SEMANTIC
+            or self.type == LiteLLMCacheType.VALKEY_SEMANTIC
         ) and default_in_redis_ttl is not None:
             self.ttl = default_in_redis_ttl
 
